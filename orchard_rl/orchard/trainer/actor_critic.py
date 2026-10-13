@@ -557,6 +557,13 @@ class ActorCriticTrainerBase(TrainerBase):
             move_actor_state=move_actor_state,
         )
         self._after_step(next_state, t)
+
+        ##### Track Empirical Expected Rewards
+        for observer_id in range(self._n_agents):
+            self._empirical_expected_reward[observer_id][state.actor] = \
+            (self._empirical_expected_reward[observer_id][state.actor] * t + trace_pick_rewards[observer_id]) / (t+1)
+        #######################################
+
         return next_state
 
     # ------------------------------------------------------------------
@@ -881,11 +888,6 @@ class ActorCriticTrainerBase(TrainerBase):
         selected_rewards = rewards_by_action[action_idx]
         selected_after_values = after_values_by_action[action_idx]
 
-        ##### Track Empirical Expected Rewards
-        for observer_id in range(self._n_agents):
-            self._empirical_expected_reward[observer_id][actor_id] = \
-            (self._empirical_expected_reward[observer_id][actor_id] * t + selected_rewards[observer_id]) / (t+1)
-        #####
         
 
         if self._following_states:

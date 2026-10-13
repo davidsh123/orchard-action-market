@@ -81,7 +81,15 @@ class Reporter:
         self.alpha_mu * math.exp(-mu_j) * Uhat_j / (1-math.exp(-mu_j))
 
         # Project
-        self.following_rates = self._project(self.following_rates)
+        to_project = {}
+        for id, fr in self.following_rates:
+            if not id == self.agent_id:
+                to_project[id] = fr
+        
+        to_project = self._project(to_project)
+
+        for id, projected_fr in self.to_project:
+            self.following_rates[id] = projected_fr
 
     
     def _project(self, fr: dict[int: float]) -> dict[int, float]:
