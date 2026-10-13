@@ -133,6 +133,9 @@ def build_main_csv_fieldnames(
     *,
     actor_critic: bool = False,
     following_rates: bool = False,
+
+    following_ratesv2: bool = False,
+
     influencer: bool = False,
     mc_validation: bool = False,
     rollout_metrics: bool = True,
@@ -160,6 +163,17 @@ def build_main_csv_fieldnames(
             "follower_to_influencer_weight_mean",
             "effective_follow_weight_mean",
         ])
+
+    # need to include if following_ratesv2:
+    # need to track expected rewards, following rates (need to convert them to strings since we can't direclty use lists)
+    if following_ratesv2:
+        fields.extend([
+            "Empirical Estimated Rewards",
+            "Expected Rewards",
+            "Following Rates",
+
+        ])
+
     if influencer:
         fields.extend([
             "beta_mean",

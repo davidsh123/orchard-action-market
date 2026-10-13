@@ -106,6 +106,9 @@ def train(cfg: ExperimentConfig, resume_checkpoint: str | None = None, resume_cr
             heuristic_name,
             actor_critic=bool(trainer.actor_networks),
             following_rates=cfg.train.following_rates.enabled,
+
+            following_ratesv2=cfg.train.following_ratesv2.enabled,
+
             influencer=cfg.train.influencer.enabled,
             mc_validation=mc_validation_set is not None,
             rollout_metrics=cfg.eval.rollout_metrics,

@@ -35,3 +35,6 @@ pyrightconfig.json
 
 # Logs
 *.log
+
+# Experiments
+Experiments

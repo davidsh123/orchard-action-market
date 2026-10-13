@@ -29,6 +29,9 @@ from orchard.datatypes import (
     EncoderOutput,
     EvalConfig,
     FollowingRatesConfig,
+    
+    FollowingRatesV2Config,
+
     InfluencerConfig,
     ScheduleConfig,
     State,
@@ -43,6 +46,9 @@ from orchard.following_rates import (
     initial_following_rate_to_influencer,
     initial_following_rate_vector,
 )
+
+from orchard.following_rates.following_ratesv2.Reporter import Reporter
+
 from orchard.influencer import (
     ExternalInfluencer,
     build_influencer_snapshot_row,
@@ -96,6 +102,9 @@ class ActorCriticTrainerBase(TrainerBase):
         heuristic: Heuristic,
         freeze_critic: bool,
         following_rates_cfg: FollowingRatesConfig,
+
+        following_ratesv2_cfg: FollowingRatesV2Config,
+
         influencer_cfg: InfluencerConfig,
         comm_only_teammates: bool = False,
         actor_bt: BatchedActorTrainer | None = None,
@@ -133,6 +142,9 @@ class ActorCriticTrainerBase(TrainerBase):
         self._entropy_count = 0
 
         self._following_rates_cfg = following_rates_cfg
+
+        self._following_ratesv2_cfg = following_ratesv2_cfg
+
         self._influencer_cfg = influencer_cfg
         self._comm_only_teammates = bool(comm_only_teammates)
         self._teammate_matrix = self._build_teammate_matrix()
@@ -178,6 +190,23 @@ class ActorCriticTrainerBase(TrainerBase):
                 )
                 for agent_id in range(self._n_agents)
             ]
+
+        self._reporters: list[Reporter] = []
+
+        if self._following_ratesv2_cfg.enabled:
+            agents = [i for i in range(self._n_agents)]
+            budget = self._following_ratesv2_cfg.budget
+            epsilon = self._following_ratesv2_cfg.epsilon
+            self._reporters = [
+                Reporter(id, agents, budget, epsilon)
+                for id in range(self._n_agents)
+                ]
+            
+            # self._empirical_expected_reward[actor_id][observer_id] = empirical expected reward
+            self._empirical_expected_reward = [list(self._reporters[i].expected_rewards.values())
+                                             for i in range(self._n_agents)]
+    
+
         if self._influencer_cfg.enabled:
             self._influencer = ExternalInfluencer(
                 budget=self._influencer_cfg.budget,
@@ -651,6 +680,20 @@ class ActorCriticTrainerBase(TrainerBase):
                 base_state,
                 pick_type=action.pick_type() if action.is_pick() else None,
             )
+
+            # Adjust rewards to include observer reports if we are using reporters
+            if self._reporters != []:
+                new_rewards = list(rewards)
+                new_rewards[state.actor] = sum(
+                        self._reporters[observer_id].get_report(state.actor, rewards[observer_id])
+                        for observer_id in range(self._n_agents)
+                    )
+                
+                
+
+                return after_state, tuple(new_rewards)
+
+
             return after_state, rewards
 
         s_moved = self._env.apply_action(state, action)
@@ -678,6 +721,12 @@ class ActorCriticTrainerBase(TrainerBase):
                     float(rewards[observer_id]) + float(discount) * float(after_values[observer_id])
                 )
             return total
+        
+        # This method returns the Q-value for an inputted rewards and after value
+        # need to implement if self._reporters != [] case
+        if self._reporters != []:
+            return float(rewards[actor_id]) + float(discount) * float(after_values[actor_id])
+
         if self._comm_only_teammates:
             total = float(rewards[actor_id]) + float(discount) * float(after_values[actor_id])
             for observer_id in range(self._n_agents):
@@ -831,6 +880,14 @@ class ActorCriticTrainerBase(TrainerBase):
         self._dbg_actor_advantage = advantage
         selected_rewards = rewards_by_action[action_idx]
         selected_after_values = after_values_by_action[action_idx]
+
+        ##### Track Empirical Expected Rewards
+        for observer_id in range(self._n_agents):
+            self._empirical_expected_reward[observer_id][actor_id] = \
+            (self._empirical_expected_reward[observer_id][actor_id] * t + selected_rewards[observer_id]) / (t+1)
+        #####
+        
+
         if self._following_states:
             stay_idx = int(Action.STAY.value)
             stay_rewards = rewards_by_action[stay_idx]
@@ -943,6 +1000,18 @@ class ActorCriticTrainerBase(TrainerBase):
                 if key not in allowed_keys:
                     continue
                 row[key] = _sanitize_metric(value)
+
+
+        # need if self._foolowing_ratesv2_cfg.enabled:
+        if self._following_ratesv2_cfg.enabled:
+            # result = {empirical_estimated_rewards: _, estimated_rewards: "[]", following_rates: "[]"}
+            result = {"empirical_estimated_rewards": str(self._empirical_expected_reward),
+                      "estimated_rewards": str([list(reporter.expected_rewards.values()) for reporter in self._reporters]),
+                      "following_rates": str([list(reporter.following_rates.values()) for reporter in self._reporters])}
+
+
+
+        
         return row
 
     def get_detail_metrics(self) -> dict[str, float | int | str]:
@@ -1331,6 +1400,9 @@ class ActorCriticGpuTrainer(ActorCriticTrainerBase):
         heuristic: Heuristic,
         freeze_critic: bool,
         following_rates_cfg: FollowingRatesConfig,
+
+        following_ratesv2_cfg: FollowingRatesV2Config,
+
         influencer_cfg: InfluencerConfig,
         comm_only_teammates: bool = False,
         actor_bt: BatchedActorTrainer | None = None,
@@ -1349,6 +1421,9 @@ class ActorCriticGpuTrainer(ActorCriticTrainerBase):
             heuristic=heuristic,
             freeze_critic=freeze_critic,
             following_rates_cfg=following_rates_cfg,
+
+            following_ratesv2_cfg=following_ratesv2_cfg,
+
             influencer_cfg=influencer_cfg,
             comm_only_teammates=comm_only_teammates,
             actor_bt=actor_bt,
@@ -1393,6 +1468,11 @@ class ActorCriticGpuTrainer(ActorCriticTrainerBase):
         discount: float,
     ) -> torch.Tensor:
         returns_t = rewards_t + float(discount) * after_values_t
+
+        # return Q-values for the case where we are using reporters
+        if self._reporters != []:
+            return returns_t[:, actor_id]
+
         if not self._following_states:
             if self._comm_only_teammates:
                 weights = self._teammate_mask_tensor(

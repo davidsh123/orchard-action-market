@@ -190,6 +190,12 @@ class FollowingRatesConfig:
     solver: str = "closed_form"
     fixed: bool = False
 
+@dataclass(frozen=True)
+class FollowingRatesV2Config:
+    enabled: bool = False
+    budget: float = 0.0
+    epsilon: float = 0.0
+
 
 @dataclass(frozen=True)
 class InfluencerConfig:
@@ -207,6 +213,9 @@ class TrainConfig:
     freeze_critic: bool = False
     algorithm: AlgorithmConfig = AlgorithmConfig()
     following_rates: FollowingRatesConfig = FollowingRatesConfig()
+
+    following_ratesv2: FollowingRatesV2Config = FollowingRatesV2Config()
+
     influencer: InfluencerConfig = InfluencerConfig()
     learning_type: LearningType = LearningType.DECENTRALIZED
     use_gpu: bool = True

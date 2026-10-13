@@ -57,6 +57,9 @@ def create_trainer(
                 heuristic=cfg.train.heuristic,
                 freeze_critic=cfg.train.freeze_critic,
                 following_rates_cfg=cfg.train.following_rates,
+
+                following_ratesv2_cfg = cfg.train.following_ratesv2,
+
                 influencer_cfg=cfg.train.influencer,
                 comm_only_teammates=cfg.train.comm_only_teammates,
                 actor_bt=actor_bt,
@@ -82,6 +85,9 @@ def create_trainer(
             heuristic=cfg.train.heuristic,
             freeze_critic=cfg.train.freeze_critic,
             following_rates_cfg=cfg.train.following_rates,
+
+            following_ratesv2_cfg = cfg.train.following_ratesv2,
+
             influencer_cfg=cfg.train.influencer,
             comm_only_teammates=cfg.train.comm_only_teammates,
             actor_bt=actor_bt,

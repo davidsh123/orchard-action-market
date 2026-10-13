@@ -7,6 +7,9 @@ import torch.nn as nn
 
 import orchard.encoding as encoding
 from orchard.actor_critic import PolicyNetwork
+
+from orchard.following_rates.following_ratesv2.Reporter import Reporter
+
 from orchard.enums import Activation, LearningType, WeightInit
 from orchard.datatypes import EncoderOutput, EnvConfig, ModelConfig, TrainConfig
 from orchard.schedule import compute_schedule_value

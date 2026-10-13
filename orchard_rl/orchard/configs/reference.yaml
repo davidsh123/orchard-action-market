@@ -158,6 +158,12 @@ train:
     solver: closed_form            # closed_form or scipy
     fixed: false                   # true = keep initial rates fixed
 
+  # Newly implemented version of following rates  (Oct. 2026)
+  following_ratesv2:
+    enabled: false
+    budget: 1                      # attention budget for all agents
+    epsilon: 0.1                   # following rate floor
+
   # Optional external influencer extension layered on following-rates.
   influencer:
     enabled: false                 # requires following_rates.enabled=true

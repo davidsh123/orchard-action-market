@@ -24,6 +24,7 @@ from orchard.datatypes import (
     EvalConfig,
     ExperimentConfig,
     FollowingRatesConfig,
+    FollowingRatesV2Config,
     InfluencerConfig,
     LoggingConfig,
     ModelConfig,
@@ -211,6 +212,11 @@ def _parse_train(d: dict[str, Any]) -> TrainConfig:
         fixed=bool(following_d.get("fixed", False)),
     )
 
+    followingv2_d = d.get("following_ratesv2", {})
+    followingv2_cfg = FollowingRatesV2Config(enabled=bool(followingv2_d.get("enabled", False)),
+                                             budget=float(followingv2_d.get("budget", 0.0)),
+                                             epsilon=float(followingv2_d.get("epsilon", 0.0)))
+
     influencer_d = d.get("influencer", {})
     influencer_cfg = InfluencerConfig(
         enabled=bool(influencer_d.get("enabled", False)),
@@ -290,6 +296,9 @@ def _parse_train(d: dict[str, Any]) -> TrainConfig:
         epsilon=eps_cfg,
         algorithm=AlgorithmConfig(name=algorithm_name),
         following_rates=following_cfg,
+
+        following_ratesv2=followingv2_cfg,
+
         influencer=influencer_cfg,
         learning_type=_enum(d.get("learning_type", "decentralized"), "learning_type"),
         use_gpu=use_gpu,
@@ -403,6 +412,14 @@ def load_config(path: str | Path, overrides: list[str] | None = None) -> Experim
     train_cfg = _parse_train(raw["train"])
     if train_cfg.following_rates.enabled and env_cfg.n_agents < 2:
         raise ValueError("train.following_rates.enabled=true requires env.n_agents >= 2.")
+    
+    if train_cfg.following_ratesv2.enabled:
+        if train_cfg.following_ratesv2.epsilon > train_cfg.following_ratesv2.budget / (env_cfg.n_agents - 1):
+            raise ValueError("train.following_ratesv2.epsilon must be less than or equal to budget/(env.n_agents-1)")  
+
+    if train_cfg.following_rates.enabled and train_cfg.following_ratesv2.enabled:
+        raise ValueError("Cannot enable both following rates") 
+
     return ExperimentConfig(
         env=env_cfg,
         model=model_cfg,
