@@ -19,6 +19,9 @@ class Reporter:
     # agent j perceives from agent i's action
     expected_rewards: dict[int, float]
 
+    sum_expected_rewards: dict[int, float]
+    n_observations: dict[int, int]
+
     # Probability of an actor acting
     # Initialized as uniform distribution for round-robin ordering
     acting_probabilities: dict[int, float]
@@ -43,6 +46,9 @@ class Reporter:
         self.following_rates = {}
         self.expected_rewards = {}
         self.acting_probabilities = {}
+        self.sum_expected_rewards = {}
+        self.n_observations = {}
+
         for id in agents:
             if id != self.agent_id:
                 self.following_rates[id] = (self.budget / (len(self.agents) - 1))
@@ -50,6 +56,10 @@ class Reporter:
                 self.following_rates[id] = 0
             self.expected_rewards[id] = 0
             self.acting_probabilities[id] = 1/len(self.agents)
+
+
+            self.sum_expected_rewards[id] = 0
+            self.n_observations[id] = 0
 
         self.alpha_U = 0.1
         self.alpha_mu = 0.01
@@ -90,6 +100,12 @@ class Reporter:
 
         for id, projected_fr in to_project.items():
             self.following_rates[id] = projected_fr
+
+
+        # Track empirical expected reward
+        self.sum_expected_rewards[actor_id] += perceived_reward
+        self.n_observations[actor_id] += 1
+
 
     
     def _project(self, fr: dict[int: float]) -> dict[int, float]:

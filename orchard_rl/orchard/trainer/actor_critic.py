@@ -202,9 +202,6 @@ class ActorCriticTrainerBase(TrainerBase):
                 for id in range(self._n_agents)
                 ]
             
-            # self._empirical_expected_reward[actor_id][observer_id] = empirical expected reward
-            self._empirical_expected_reward = [list(self._reporters[i].expected_rewards.values())
-                                             for i in range(self._n_agents)]
     
 
         if self._influencer_cfg.enabled:
@@ -557,13 +554,6 @@ class ActorCriticTrainerBase(TrainerBase):
             move_actor_state=move_actor_state,
         )
         self._after_step(next_state, t)
-
-        ##### Track Empirical Expected Rewards
-        for observer_id in range(self._n_agents):
-            self._empirical_expected_reward[observer_id][state.actor] = \
-            (self._empirical_expected_reward[observer_id][state.actor] * t + trace_pick_rewards[observer_id]) / (t+1)
-        #######################################
-
         return next_state
 
     # ------------------------------------------------------------------
@@ -1006,7 +996,14 @@ class ActorCriticTrainerBase(TrainerBase):
 
         # need if self._foolowing_ratesv2_cfg.enabled:
         if self._following_ratesv2_cfg.enabled:
-            result = {"Empirical Expected Rewards": str(self._empirical_expected_reward),
+            empirical_expected_rewards = []
+            for o_id in range(self._n_agents):
+                empirical_expected_rewards.append([
+                    self._reporters[o_id].sum_expected_rewards[a_id] / self._reporters[o_id].n_observations[a_id]
+                    for a_id in range(self._n_agents)])
+
+
+            result = {"Empirical Expected Rewards": str(empirical_expected_rewards),
                       "Expected Rewards": str([list(reporter.expected_rewards.values()) for reporter in self._reporters]),
                       "Following Rates": str([list(reporter.following_rates.values()) for reporter in self._reporters])}
             
