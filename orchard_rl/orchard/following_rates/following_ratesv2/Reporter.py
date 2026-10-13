@@ -82,13 +82,13 @@ class Reporter:
 
         # Project
         to_project = {}
-        for id, fr in self.following_rates:
+        for id, fr in self.following_rates.items():
             if not id == self.agent_id:
                 to_project[id] = fr
         
         to_project = self._project(to_project)
 
-        for id, projected_fr in self.to_project:
+        for id, projected_fr in to_project.items():
             self.following_rates[id] = projected_fr
 
     
