@@ -1000,6 +1000,8 @@ class ActorCriticTrainerBase(TrainerBase):
             for o_id in range(self._n_agents):
                 empirical_expected_rewards.append([
                     self._reporters[o_id].sum_expected_rewards[a_id] / self._reporters[o_id].n_observations[a_id]
+                    if self._reporters[o_id].n_observations[a_id] != 0
+                    else 0
                     for a_id in range(self._n_agents)])
 
 
