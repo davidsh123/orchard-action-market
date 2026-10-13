@@ -168,7 +168,7 @@ def build_main_csv_fieldnames(
     # need to track expected rewards, following rates (need to convert them to strings since we can't direclty use lists)
     if following_ratesv2:
         fields.extend([
-            "Empirical Estimated Rewards",
+            "Empirical Expected Rewards",
             "Expected Rewards",
             "Following Rates",
 

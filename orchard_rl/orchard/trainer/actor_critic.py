@@ -1004,9 +1004,9 @@ class ActorCriticTrainerBase(TrainerBase):
 
         # need if self._foolowing_ratesv2_cfg.enabled:
         if self._following_ratesv2_cfg.enabled:
-            result = {"empirical_estimated_rewards": str(self._empirical_expected_reward),
-                      "estimated_rewards": str([list(reporter.expected_rewards.values()) for reporter in self._reporters]),
-                      "following_rates": str([list(reporter.following_rates.values()) for reporter in self._reporters])}
+            result = {"Empirical Expected Rewards": str(self._empirical_expected_reward),
+                      "Expected Rewards": str([list(reporter.expected_rewards.values()) for reporter in self._reporters]),
+                      "Following Rates": str([list(reporter.following_rates.values()) for reporter in self._reporters])}
             
             row.update(result)
 
