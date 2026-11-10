@@ -472,7 +472,7 @@ class ActorCriticTrainerBase(TrainerBase):
             )
 
             self._timer.start(TimerSection.ACTION)
-            pick_action, pick_actor_state, pick_probs, pick_mask = self._sample_action(pick_state)
+            pick_action, pick_actor_state, pick_probs, pick_mask = self._sample_action(pick_state, t)
             self._timer.stop()
 
             self._timer.start(TimerSection.ENV)
