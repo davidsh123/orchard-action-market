@@ -209,6 +209,10 @@ class TrainConfig:
     seed: int
     lr: ScheduleConfig
     epsilon: ScheduleConfig
+
+    # epsilon for epsilon policy in train configuration
+    policy_epsilon: ScheduleConfig
+
     actor_lr: ScheduleConfig | None = None
     freeze_critic: bool = False
     algorithm: AlgorithmConfig = AlgorithmConfig()

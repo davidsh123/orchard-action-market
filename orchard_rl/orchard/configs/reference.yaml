@@ -130,6 +130,15 @@ train:
     end: 0.05                      # final (only used if schedule=linear)
     schedule: none                 # none=constant, linear=decay
 
+
+  # New Epsilon for actors in actor-critic 
+  # Used by algorithm.name=actor_critic. 
+  policy_epsilon:
+    start: 0.05                    # initial (and constant if schedule=none)
+    end: 0.05                      # final value (only used if schedule=linear)
+    schedule: none                 # none=constant, linear=decay from start to end
+
+
   # Training algorithm:
   #   value: current after-state value learning
   #   actor_critic: decentralized masked-policy actor-critic

@@ -240,6 +240,9 @@ def train(cfg: ExperimentConfig, resume_checkpoint: str | None = None, resume_cr
             detail_row["current_epsilon"] = compute_schedule_value(
                 cfg.train.epsilon, t + 1, cfg.train.total_steps,
             )
+            detail_row["current_policy_epsilon"] = compute_schedule_value(
+                cfg.train.policy_epsilon, t + 1, cfg.train.total_steps,
+            )
 
             for idx, net in enumerate(trainer.critic_networks):
                 for name, val in net.get_weight_norms().items():

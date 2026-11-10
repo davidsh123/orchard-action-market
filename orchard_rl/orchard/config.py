@@ -173,6 +173,10 @@ def _parse_train(d: dict[str, Any]) -> TrainConfig:
     eps_d = d.get("epsilon", {"start": 0.1, "end": 0.01, "schedule": "linear"})
     eps_cfg = _parse_schedule(eps_d, "train.epsilon")
 
+    policy_epsilon_d = d.get("policy_epsilon", {"start": 0.1, "end": 0.01, "schedule": "linear"})
+    policy_epsilon_cfg = _parse_schedule(policy_epsilon_d, "train.epsilon_policy")
+
+
     heuristic = _enum(d.get("heuristic", "nearest"), "heuristic")
 
     stop_d = d.get("stopping", {})
@@ -294,6 +298,10 @@ def _parse_train(d: dict[str, Any]) -> TrainConfig:
         actor_lr=actor_lr_cfg,
         freeze_critic=freeze_critic,
         epsilon=eps_cfg,
+
+        # include epsilon for actors
+        policy_epsilon=policy_epsilon_cfg,
+
         algorithm=AlgorithmConfig(name=algorithm_name),
         following_rates=following_cfg,
 

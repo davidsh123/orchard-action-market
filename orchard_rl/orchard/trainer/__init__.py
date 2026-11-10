@@ -53,6 +53,10 @@ def create_trainer(
                 gamma=cfg.env.gamma,
                 critic_lr_schedule=cfg.train.lr,
                 actor_lr_schedule=cfg.train.actor_lr or cfg.train.lr,
+
+                # include epsilon for policies
+                policy_epsilon=cfg.train.policy_epsilon,
+
                 total_steps=cfg.train.total_steps,
                 heuristic=cfg.train.heuristic,
                 freeze_critic=cfg.train.freeze_critic,
@@ -81,6 +85,10 @@ def create_trainer(
             gamma=cfg.env.gamma,
             critic_lr_schedule=cfg.train.lr,
             actor_lr_schedule=cfg.train.actor_lr or cfg.train.lr,
+
+            # include epsilon for actors
+            policy_epsilon=cfg.train.policy_epsilon,
+
             total_steps=cfg.train.total_steps,
             heuristic=cfg.train.heuristic,
             freeze_critic=cfg.train.freeze_critic,

@@ -98,6 +98,10 @@ class ActorCriticTrainerBase(TrainerBase):
         gamma: float,
         critic_lr_schedule: ScheduleConfig,
         actor_lr_schedule: ScheduleConfig,
+
+        # include actor epsilon
+        policy_epsilon: ScheduleConfig,
+
         total_steps: int,
         heuristic: Heuristic,
         freeze_critic: bool,
@@ -118,6 +122,9 @@ class ActorCriticTrainerBase(TrainerBase):
         self._gamma = float(gamma)
         self._critic_lr_schedule = critic_lr_schedule
         self._actor_lr_schedule = actor_lr_schedule
+
+        self.policy_epsilon = policy_epsilon
+
         self._total_steps = int(total_steps)
         self._heuristic = heuristic
         self._freeze_critic = bool(freeze_critic)
@@ -437,7 +444,7 @@ class ActorCriticTrainerBase(TrainerBase):
         self._timer.step_begin()
 
         self._timer.start(TimerSection.ACTION)
-        move_action, move_actor_state, move_probs, move_mask = self._sample_action(state)
+        move_action, move_actor_state, move_probs, move_mask = self._sample_action(state, t)
         move_probs_np = move_probs.detach().cpu().numpy() if isinstance(move_probs, torch.Tensor) else move_probs
         self._dbg_was_greedy = int(move_action.value) == int(np.argmax(move_probs_np))
         self._timer.stop()
@@ -580,11 +587,23 @@ class ActorCriticTrainerBase(TrainerBase):
     def _sample_action(
         self,
         state: State,
+        t: int,
     ) -> tuple[Action, EncoderOutput, np.ndarray | torch.Tensor, np.ndarray]:
+        
+
         actor_id = state.actor
         actor_state = self._encode_actor_state(state, actor_id)
         legal_mask = self._legal_mask(state)
         probs = self._actor_networks_list[actor_id].get_action_probabilities(actor_state, legal_mask)
+
+        # Pick random element with probability determined by policy_epsilon
+        if _random.random() < compute_schedule_value(self.policy_epsilon, t, self._total_steps):
+            legal = []
+            for i, p in enumerate(probs): 
+                if p > 0:
+                    legal.append(i)
+            return policy_index_to_action(_random.choice(legal)), actor_state, probs, legal_mask
+
         action_idx = self._sample_action_index_from_probs(actor_id, probs)
         return policy_index_to_action(action_idx), actor_state, probs, legal_mask
 
@@ -1398,6 +1417,9 @@ class ActorCriticGpuTrainer(ActorCriticTrainerBase):
         gamma: float,
         critic_lr_schedule: ScheduleConfig,
         actor_lr_schedule: ScheduleConfig,
+
+        policy_epsilon: ScheduleConfig,
+
         total_steps: int,
         heuristic: Heuristic,
         freeze_critic: bool,
@@ -1419,6 +1441,9 @@ class ActorCriticGpuTrainer(ActorCriticTrainerBase):
             gamma=gamma,
             critic_lr_schedule=critic_lr_schedule,
             actor_lr_schedule=actor_lr_schedule,
+
+            policy_epsilon=policy_epsilon,
+
             total_steps=total_steps,
             heuristic=heuristic,
             freeze_critic=freeze_critic,
@@ -1510,11 +1535,21 @@ class ActorCriticGpuTrainer(ActorCriticTrainerBase):
     def _sample_action(
         self,
         state: State,
+        t: int,
     ) -> tuple[Action, EncoderOutput, np.ndarray | torch.Tensor, np.ndarray]:
         actor_id = state.actor
         actor_state = self._encode_actor_state(state, actor_id)
         legal_mask = self._legal_mask(state)
         probs_t = self._actor_networks_list[actor_id].get_action_probabilities_tensor(actor_state, legal_mask)
+
+        # Sample random action with probability given by policy_epsilon
+        if _random.random() < compute_schedule_value(self.policy_epsilon, t, self._total_steps):
+            legal = []
+            for i, p in enumerate(probs_t): 
+                if p > 0:
+                    legal.append(i)
+            return policy_index_to_action(_random.choice(legal)), actor_state, probs_t, legal_mask
+
         action_idx = self._sample_action_index_from_probs(actor_id, probs_t)
         return policy_index_to_action(action_idx), actor_state, probs_t, legal_mask
 
