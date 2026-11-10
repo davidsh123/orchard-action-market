@@ -263,7 +263,7 @@ def build_detail_csv_fieldnames(
     actor_networks: list[Any] | None = None,
 ) -> list[str]:
     n_networks = len(critic_networks)
-    fields = ["step", "wall_time", "ram_mb", "current_lr", "current_epsilon"]
+    fields = ["step", "wall_time", "ram_mb", "current_lr", "current_epsilon", "current_policy_epsilon"]
     for agent_idx in range(n_networks):
         for name, _ in critic_networks[agent_idx].named_parameters():
             if "weight" in name:
