@@ -291,10 +291,9 @@ def _parse_train(d: dict[str, Any]) -> TrainConfig:
             f"train.behavior_policy must be 'value_greedy' or 'heuristic', got {behavior_policy!r}"
         )
 
-    policy_epsilon_cfg = None
-    if algorithm_name == AlgorithmName.ACTOR_CRITIC:
-        policy_epsilon_d = d.get("policy_epsilon", {"start": 0.1, "end": 0.01, "schedule": "linear"})
-        policy_epsilon_cfg = _parse_schedule(policy_epsilon_d, "train.policy_epsilon")
+
+    policy_epsilon_d = d.get("policy_epsilon", {"start": 0.1, "end": 0.01, "schedule": "linear"})
+    policy_epsilon_cfg = _parse_schedule(policy_epsilon_d, "train.policy_epsilon")
 
     return TrainConfig(
         total_steps=int(d["total_steps"]),
