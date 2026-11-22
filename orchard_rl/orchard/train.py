@@ -190,7 +190,9 @@ def train(cfg: ExperimentConfig, resume_checkpoint: str | None = None, resume_cr
                         mc_validation_logger.log(mc_log_row)
             row.update(trainer.get_main_metrics())
             main_logger.log(row)
-            trainer.log_auxiliary(t + 1, round(wall_time, 3))
+
+            # Turned off auxiliary logging
+            # trainer.log_auxiliary(t + 1, round(wall_time, 3))
 
             # Print progress
             print(f"\n--- Step {t + 1} ({wall_time:.1f}s) ---")
